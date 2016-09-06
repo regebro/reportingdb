@@ -16,6 +16,23 @@ Lennart Regebro
 
 Wroc.py 2016-09-06
 
+----
+
+.. image:: images/shoobx.png
+   :class: logo
+
+.. image:: images/shoobx.jpg
+   :width: 100%
+
+.. note::
+
+   Shoobx is the one place where entrepreneurs, lawyers, investors, and board
+   members can come together to generate, review, approve, and execute
+   company documents. Shoobx is a system of record, execution, and engagement
+   built to simplify standard corporate legal processes so entrepreneurs can
+   focus on what matters most: their company.
+
+   It's basically a webapp for simplifying the handling of legal documents.
 
 ----
 
@@ -244,75 +261,149 @@ The Date Dimension
 
 ----
 
+Extract, Transform, Load
+========================
+
+.. note::
+
+   The basic procedure for updating the reporting database, or any kind of
+   data warehouse is called ETL, extract, transform, load.
+
+   It sounds obvious, but it isn't, because there is also ELT, extract, load,
+   transform, where the transformation of data is done when actually looking
+   at data. But as we want the reporting database to be easy to use for
+   reports, we need to transform the data before loading it into the reporting
+   database.
+
+   These three steps doesn't need to be done at the same place or the same
+   time. And where to do them and how depends a lot on how your choose to
+   update the reporting database.
+
+----
+
 Updating the reporting db
 =========================
 
-* Direct updating
+* In-application updating
 
-* Nightly batch jobs
+* Client/Server
 
-* Low priority background process
+* Separate process
 
-* Asynchronous tasks
+.. note::
 
+   And how you update the reporting database depends a lot on how your
+   application looks. Is it a commercial third-party application that you
+   can't modify? Then it pretty much needs to be a separate process. Do you have
+   multiple apps that you need to merge the data from? Again, it pretty much
+   has to be a separate process.
+
+----
+
+In-application updating
+=======================
+
+* Requires application modification
+
+* Risk inconsistent data
+
+* App must change when reporting db changes
+
+* No long running main database usage
+
+* You need async support
+
+.. note::
+
+   If you are developing the application that uses the main database, you could
+   in theory just add updating of the reporting database directly from that
+   application. To not make the application slower as a result you need to
+   do the updates asynchronously, with Celery, gevent or similar.
+
+   And you will have to make sure the reporting database is updated everywhere
+   the main database is updated. This is easier to do if the application is
+   event driven, so that modifying an object always raises an event, because
+   then you can trap that event and do the update.
+
+   I would not attempt this without using events that are emitted by the
+   framework or library being used, because otherwise you will forget, and
+   your data will be inconsistent.
+
+----
+
+Client/Server
+=============
+
+* Requires application modification
+
+* Risk inconsistent data
+
+* Clean separation of ETL responsabilities
+
+* No long running main database usage
 
 .. note::
 
    Async tasks mean: multiprocessing, Celery, or gevent etc
 
-----
-
-Direct updating
-===============
-
-* Fairly easy
-
-* Will make the application slower
-
-* Requires application modification
+   This again requires you to modify the application server, and you need to
+   have a good event framework. But you get better separation of
+   responsabilities and the app only needs updating if the server API changes.
 
 ----
 
-Nightly batch jobs
-==================
-
-* Easy to do
+Separate process
+================
 
 * No application modifications
-
-* Monitoring can be a simple result email
 
 * Can run on separate server instance
 
 * Can bog down database server
 
-* How do you know what to sync?
+* Monitoring may be tricky
+
+* Ready made tools exist!
+
+.. note:
+
+   For these last two, there are tools and frameworks that can help you.
+   Pentaho for example has a data integration tool called "Kettle" where
+   you can define up the Extractions, Transformations and Load them into
+   a database. And you can decide when these should be run, including saying
+   that it should be run every 15 minutes etc.
+
+   Here again Pentaho has a solution, it's called "Kettle" and is a data
+   integration server, where you define up the Extract/Transform/Load jobs,
+   and when they should be run. I haven't used it, using it for us would be
+   hard.
 
 ----
 
-Low priority background process
-===============================
+Change Data Capture
+===================
 
-* Requires no server modification
+ * Time stamps
 
-* Doesn't bog down server if well-written
+ * Sequenced IDs
 
-* How do you know what to sync?
+ * Database triggers/events
 
-* Needs monitoring
+ * Database logs
 
-----
+.. note::
 
-Asynchronous tasks
-==================
+   If you don't have that much data you might be able to sync all the data in
+   a nightly batch job. But that doesn't work for services that must run
+   24/7, because it can put a heavy load on the databases. You might also
+   want more immediate data.
 
-* Hardest to implement
+   In that case you must be able to detect changes. There's various ways of
+   doing that.
 
-* Requires application modification
-
-* Doesn't bog down database server if well-written
-
-* Can run on separate server instance
+   Remember, that no matter what solution you choose, you need to also have
+   a process in place to sync *all* data, for when you need to modify the
+   reporting database schema.
 
 ----
 
