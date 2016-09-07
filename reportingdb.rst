@@ -667,3 +667,6 @@ Queries
 
 Questions?
 ==========
+
+http://slides.colliberty.com/Wroc.Py-201609
+
