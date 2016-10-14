@@ -14,7 +14,11 @@ Lennart Regebro
 .. image:: images/shoobx.png
    :class: logo
 
-Wroc.py 2016-09-06
+PyCon PL 2016-10-15
+
+.. note::
+
+   First something quick about the Company I work for, Shoobx.
 
 ----
 
@@ -32,7 +36,8 @@ Wroc.py 2016-09-06
    built to simplify standard corporate legal processes so entrepreneurs can
    focus on what matters most: their company.
 
-   It's basically a webapp for simplifying the handling of legal documents.
+   It's basically a webapp that will deal with all your legal documents.
+   At Shoobx I have mostly been dealing with reporting.
 
 ----
 
@@ -41,16 +46,18 @@ Wroc.py 2016-09-06
 
 .. note::
 
-   So you have a big database, right, and the database is extremely
-   normalized, because it was designed by people who had taken university
-   courses in relational databases, so this means that no data is duplicated
-   anywhere, which gives you a lot of tables, and means you have to make many,
-   many joins. Everytime you make a query.
-
    And you want to make reports. Many reports. Which office is selling most
    of the yellow telephones? How has shipping costs developed the last few
    years? Are we actually getting new customers in a rate higher than we lose
-   old ones? The economics department has many questions.
+   old ones? People have many questions.
+
+   So you have a big database, right, and the database is extremely
+   normalized, because it was designed by people who had taken university
+   courses in relational databases. So this means that no data is duplicated
+   anywhere, which gives you a lot of tables many that only have a key column
+   and a value column, and means you have to make many, many joins. Everytime
+   you make a query. And if you make a small mistake, your query will not run
+   in ten seconds, it will take 10 hours.
 
 ----
 
@@ -59,14 +66,14 @@ Wroc.py 2016-09-06
 
 .. note::
 
-   Or, your data is stored in a NoSQL database. There are index objects,
+   Or, your data is stored in a NoSQL database. There are indexes,
    but not on the things you need to index on. And there is no reporting
    tool that will make nice reports based on your brand of obscure NoSQL
    database that you choose when this project started because it was the
    hyped database of the week.
 
-   Or, worst case, your data may be spread over many databases, maybe even
-   several different types of datatabases!
+   Or your data may be spread over many databases, maybe even
+   several different types of databases!
 
 ----
 
@@ -75,15 +82,15 @@ Wroc.py 2016-09-06
 
 .. note::
 
-   So you make the reports. For the SQL database you end up writing these
-   elaborate queries with loads of JOIN statements, and you make a nice table
-   or a nice graph out of it.
+   But you make the reports. For the SQL database you end up writing these
+   elaborate queries with loads of JOIN statements.
 
    For the NoSQL database you actually have to write a program that exports the
    correct data into a CSV file that you then can make reports from. Maybe you
    have to merge the data from different databases.
 
-   All is well. Your boss is happy. Your job is secure!
+   You make a nice table or a nice graph out of the data. All is well. Your
+   boss is happy. Your job is secure!
 
 ----
 
@@ -96,13 +103,15 @@ Wroc.py 2016-09-06
    and your carefully crafted queries or Python code needs changing.
    But your boss wants THIS weeks report.
 
-   And in fact, she likes your reports so much, that she demands daily copies!
+   And in fact, She likes your reports so much, that she demands daily copies!
    But because of the complicated database schema, or lack of indexes your
    reports take hours to run, and whenever you do run them, the database slows
    down and everybody stars complaining that the Internet is slow, because they
    have no idea what is the Internet and what is not, and they go to the
    network admin and he figures out it's the database that is overloaded and
-   gets angry at you and takes up your time when you need to fix the reports.
+   gets angry at you and stops bringing you coffee.
+
+   You are in a pickle now! You need a reporting database!
 
 ----
 
@@ -124,17 +133,21 @@ What?
 
 * Made to do reporting easy
 
-* Read-only
-
 * Not afraid of duplicating data
-
-* Can be run on a separate server
-
-* Should be rebuildable from production server data
 
 * Can integrate data from several sources
 
-* You can have multiple reporting databases
+* Often, but not necessarily, "read-only"
+
+.. note::
+
+   * Made to do reporting easy
+
+   * Not afraid of duplicating data
+
+   * Can integrate data from several sources
+
+   * Often, but not necessarily, "read-only"
 
 ----
 
@@ -163,19 +176,32 @@ When?
      field names and value might not fit what the economics department expects,
      or you have different company regions than the database, etc.
 
-
 ----
 
 How?
 ====
 
-* Separate database, maybe even separate server
+* Separate database
+
+* Maybe even separate server
+
+* Asynchronous updates
+
+* Data must be rebuildable
 
 * Use a star or snowflake schema
 
-* Update the reporting database asynchronously
+.. note::
 
-* Data should be rebuildable from production servers
+   * Separate database
+
+   * Maybe even separate server
+
+   * Asynchronous updates
+
+   * Data must be rebuildable
+
+   * Use a star or snowflake schema
 
 
 ----
@@ -240,7 +266,7 @@ The Date Dimension
  month_abbr         'Sep'              week_of_month      2
  month_of_quarter   3                  week_of_year       36
  quarter            3                  iso_week_of_year   36
- quarter_ordinal    3rd                mmyyyy             '092016'
+ quarter_ordinal    '3rd'              mmyyyy             '092016'
  month_year         '09-1026'          is_holiday         False
  year               2016               holiday_name       ''
  year_name          'CY 2016'
@@ -255,6 +281,12 @@ The Date Dimension
 
    This way you can make a query that filters only Tuesdays the 6th, in the
    second quarter, or whatever.
+
+   It also includes columns that are not for querying, but for displaying, such
+   as the quarter_ordinal, which contains the text '3rd'.
+
+   The Id, as you see, is an integer for fast indexing, but an integer which
+   is easily recognizable for humans. So, ISO date format.
 
    What columns you want is up to you, these are the ones from the database
    we are using, which is complete overkill.
@@ -271,9 +303,11 @@ Extract, Transform, Load
 
    It sounds obvious, but it isn't, because there is also ELT, extract, load,
    transform, where the transformation of data is done when actually looking
-   at data. But as we want the reporting database to be easy to use for
-   reports, we need to transform the data before loading it into the reporting
-   database.
+   at data. That's usually done for "data lakes" where you stick *all* your
+   data in quite raw formats for data mining and things like that.
+
+   But as we want the reporting database to be easy to use for reports, we
+   need to transform the data before loading it into the reporting database.
 
    These three steps doesn't need to be done at the same place or the same
    time. And where to do them and how depends a lot on how your choose to
@@ -281,129 +315,153 @@ Extract, Transform, Load
 
 ----
 
-Updating the reporting db
-=========================
-
-* In-application updating
-
-* Client/Server
-
-* Separate process
+Extract
+=======
 
 .. note::
 
-   And how you update the reporting database depends a lot on how your
-   application looks. Is it a commercial third-party application that you
-   can't modify? Then it pretty much needs to be a separate process. Do you have
-   multiple apps that you need to merge the data from? Again, it pretty much
-   has to be a separate process.
+   You can essentially extract the data in two ways, either by making a big
+   batch dump from your database or databases at regular intervals, or you
+   can update the reporting database when data changes.
+
+   If you have very sensitive data, then the exptract step should be careful
+   about what data is extracted. You don't want to have world readable CSV
+   files with data on exactly who bought a franch tickler. It might be
+   somebody who isn't a protestant!
 
 ----
 
-In-application updating
-=======================
+Big Batch
+=========
 
-* Requires application modification
-
-* Risk inconsistent data
-
-* App must change when reporting db changes
-
-* No long running main database usage
-
-* You need async support
-
-.. note::
-
-   If you are developing the application that uses the main database, you could
-   in theory just add updating of the reporting database directly from that
-   application. To not make the application slower as a result you need to
-   do the updates asynchronously, with Celery, gevent or similar.
-
-   And you will have to make sure the reporting database is updated everywhere
-   the main database is updated. This is easier to do if the application is
-   event driven, so that modifying an object always raises an event, because
-   then you can trap that event and do the update.
-
-   I would not attempt this without using events that are emitted by the
-   framework or library being used, because otherwise you will forget, and
-   your data will be inconsistent.
-
-----
-
-Client/Server
-=============
-
-* Requires application modification
-
-* Risk inconsistent data
-
-* Clean separation of ETL responsabilities
-
-* No long running main database usage
-
-.. note::
-
-   Async tasks mean: multiprocessing, Celery, or gevent etc
-
-   This again requires you to modify the application server, and you need to
-   have a good event framework. But you get better separation of
-   responsabilities and the app only needs updating if the server API changes.
-
-----
-
-Separate process
-================
-
-* No application modifications
+* May bog down database server
 
 * Can run on separate server instance
 
-* Can bog down database server
-
-* Monitoring may be tricky
-
 * Ready made tools exist!
 
-.. note:
+.. note::
 
-   For these last two, there are tools and frameworks that can help you.
-   Pentaho for example has a data integration tool called "Kettle" where
-   you can define up the Extractions, Transformations and Load them into
-   a database. And you can decide when these should be run, including saying
-   that it should be run every 15 minutes etc.
+   Batch extract is the most common, and preferable if you can do a dump of
+   all data in a reasonable time frame. Dumping all data out to CSV files etc
+   can bog down the database, so it's best to do it at night.
 
-   Here again Pentaho has a solution, it's called "Kettle" and is a data
-   integration server, where you define up the Extract/Transform/Load jobs,
-   and when they should be run. I haven't used it, using it for us would be
-   hard.
+   A big benefit of this procedure is that most of the tools that exist have
+   software specifically to extract data from databases in this way.
+
+   If you don't have that much data you might be able to sync all the data in
+   a nightly batch job. If not, you need to just sync the data that has
+   changed.
 
 ----
 
 Change Data Capture
 ===================
 
- * Time stamps
 
- * Sequenced IDs
+* Risk inconsistent data if data is lost or one update fails
 
- * Database triggers/events
-
- * Database logs
+* No long running main database usage
 
 .. note::
 
-   If you don't have that much data you might be able to sync all the data in
-   a nightly batch job. But that doesn't work for services that must run
-   24/7, because it can put a heavy load on the databases. You might also
-   want more immediate data.
+   In that case you must be able to detect changes. This has drawbacks, and
+   benefits.
 
-   In that case you must be able to detect changes. There's various ways of
-   doing that.
+----
 
-   Remember, that no matter what solution you choose, you need to also have
-   a process in place to sync *all* data, for when you need to modify the
+Change detection
+================
+
+* Time stamps
+
+* Sequenced IDs
+
+* Database logs
+
+
+.. note::
+
+   There's various ways of detecting changes. You can have time stamps for
+   anything that gets updates, or sequenced IDs for things that just get
+   added, but never change. These typically requires you to modify the
+   application, which is not always possible.
+
+   You can also extract information on what changed from database logs on
+   some databases. And other way is to define Database triggers and events
+   that typically will either trigger an update, or just write information on
+   what changed to a log.
+
+   And lastly, you can use Application events to update the database.
+
+   Remember, that no matter what solution you choose, you need to also have a
+   process in place to sync *all* data, for when you need to modify the
    reporting database schema.
+
+----
+
+Update on Change
+================
+
+* Database triggers/events
+
+* Application events
+
+* Near-real-time updates
+
+
+.. note::
+
+   Now, the last two here opens the possibility to update the reporting
+   database "on the fly" and not in batch jobs.
+
+   This gives you near real-time data, but adds complexity. And the
+   application event solution typically means you must be the main developers
+   of the database applications.
+
+----
+
+Transform
+=========
+
+
+.. note::
+
+   That's all for Extracting. The next step is Transform, which means you
+   take the extracted data, and use it to generate the data used for the
+   reports. This is sometimes easy, and sometimes hard. You might even have
+   so much data that you don't want to transform in memory, meaning you first
+   need to load it into temporary tables, transform, and re-export it, delete
+   those tables and then load it into the real reporting database.
+
+   But for the most case, you can use do the transform record by record.
+
+
+----
+
+Load
+====
+
+.. note::
+
+   And if you can do it record by record, then loading it to the database is
+   usually just a question of writing that record to the database directly.
+   The output of the transform can very well be new comma separated files, or
+   you can just load the data into the database directly from the scripts
+   that do the transformation.
+
+   So the separation between Transform and Load isn't always obvious, mainly
+   because loading is trivial.
+
+----
+
+TADA!
+=====
+
+.. note::
+
+   You now have a reporting database, and you can make reports. For that you
+   need some sort of reporting tool.
 
 ----
 
@@ -478,89 +536,119 @@ Pentaho Community Edition
 
 ----
 
-Pentaho Enterprise Edition
-==========================
-
-.. image:: images/pentahoee.jpg
-   :width: 100%
-
-.. note::
-
-   Pentaho EE has a somewhat easier to use GUI tool for making reports, but
-   it's still very quirky. Also the Pentago EE is rumoured to be insanely
-   expensive.
-
-----
-
 Libraries/Frameworks
 ====================
 
 * Reportlab
 
-* Tryton
-
 .. note::
 
    Reportlab is a library to generate PDF's. You make templates in XML and
-   feed it data, and out pops a report. Nice for making reports that need to
-   be run with a cron job.
+   feed it data, and out pops a report.
 
-   Tryton is supposed to have reporting tools or libraries, but I haven't
-   looked at it, but it's worth mentioning.
+   Obviously, with reportlab you need to write the report generation as
+   Python scripts. This means that you can forget end users making reports
+   so it's not ideal as a generic solution.
+
+   But it's nice for making reports that need to be run with a cron job.
+   Python can also do things SQL can't easily do, BUT the point of a
+   reporting database is that you shouldn't need that in the first place!
 
 ----
 
-
-How we do this on Shoobx
+How we do this at Shoobx
 ========================
 
-* Only one source for data
+* Near real-time
 
-* Main app is written by us
+* Super sensitive customer data
 
-* We already had support for events and Celery
+* Reports available to run as needed
 
 .. note::
 
-   We have it reasonably easy, as we only have one source of data.
-   We use several different databases, but we only have one application.
-   It's also an application we write ourselves, with an event framework
-   and Celery.
+   How do we do this at Shoobx? well, we do it the hardest way we could think
+   of! We started out with very unusual requirements, and this meant our
+   solution is unusual, but there's a lesson in there as well, because the fact
+   is that manny of these requriements were later dropped for various reasons.
+
+   We wanted to use the reporting database to do reports also available for
+   the customer through our Web app. For example reports on who actually owns
+   how many stocks in a company. That means our reporting database should
+   really only be maybe 10 15 minutes out of sync in the worst case.
+
+   This excludes most batch solutions.
+
+   That's also very sensitive data, so we could not just have one database
+   for all customers, they needed one each.
+
+   And the non-customer reports should also be available to be run when needed
+   by those internally that needed them. Obviously those reports can not
+   contain very sensitive data.
 
 ----
 
-The Reporting Server
-====================
+That means
+==========
+
+* Update on change
+
+* One database per customer
+
+* Pentaho for the reports
+
+----
+
+Good infrastructure
+===================
+
+* Only one source for data
+
+* App is written by us
+
+* We already had events and Celery
+
+.. note::
+
+   So we have high requirements, but we also have an infrastructure that easily
+   could accomodate those requirements, so it wasn't as bad as it sounds.
+
+   We only have one source of data. We do use several different databases,
+   but we only have one application. It's also an application we write
+   ourselves, built on the Zope Component Framework, so we already had change
+   events in the application, and we also already was using Celery to do
+   asynchronous tasks.
+
+   These requirements meant that we decided to do the extract on the app side
+   based on modification events, but do so asynchronously with Celery, and
+   have a a small RESTful server that would do the transform and load.
+
+----
+
+Extract
+=======
+
+Events -> Celery -> Collect data -> REST call
+
+.. note::
+
+   We just registered a whole bunch of new event handlers on the modification
+   and workflow events.
+
+   These event handlers add Celery tasks to the queue. Those tasks are then
+   picked up by the Celery handlers, which run separately from the web
+   application, which gathers the data to be sent and sends it with a REST call.
+
+----
+
+Transform and Load
+==================
 
 * Flask
 
 * Sqlalchemy + PostgreSQL
 
 * REST API
-
-.. note::
-
-   We wanted to separate the reporting from the application as much as
-   possible, so we don't even want to open the reporting database from the
-   application. Instead we wrote a small REST/JSON server in Flask which
-   recieves the data and puts it into the Postgres db.
-
-----
-
-On the application side
-=======================
-
-Events -> Celery -> Collect data -> REST call
-
-.. note::
-
-   Our webapp is written on Zope 3 which has an event system. So we registered
-   a whole bunch of new event handlers on the modification and workflow events.
-
-   These event handlers add Celery tasks to the queue. Those tasks are then
-   picked up by the Celery handlers, which run separately from the web
-   application, which gathers the data to be sent and sends it with a REST call.
-   We use the requests library for that.
 
 ----
 
@@ -665,8 +753,21 @@ Queries
 
 ----
 
+Some problems
+=============
+
+* How do you know if data is missing? - You don't.
+
+* Synchronous updates slow down the app. Async updates can come in the wrong order. - timestamps
+
+* requests library does NOT timeout by default! As a result Celery workers would get stuck.
+
+* For speed we wanted multi-threaded server, but we got massive write conflicts! - Choose the right conflict strategy on the postgresl server.
+
+----
+
 Questions?
 ==========
 
-http://slides.colliberty.com/Wroc.Py-201609
+http://slides.colliberty.com/PyConPL-2016
 
