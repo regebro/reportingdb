@@ -14,7 +14,7 @@ Lennart Regebro
 .. image:: images/shoobx.png
    :class: logo
 
-PyCon PL 2016-10-15
+Plone Conference 2016
 
 .. note::
 
@@ -47,14 +47,14 @@ PyCon PL 2016-10-15
 .. note::
 
    And you want to make reports. Many reports. Which office is selling most
-   of the yellow telephones? How has shipping costs developed the last few
-   years? Are we actually getting new customers in a rate higher than we lose
+   of the yellow telephones? Which workflow step are people getting stuck at?
+   Are we actually getting new customers in a rate higher than we lose
    old ones? People have many questions.
 
    So you have a big database, right, and the database is extremely
    normalized, because it was designed by people who had taken university
    courses in relational databases. So this means that no data is duplicated
-   anywhere, which gives you a lot of tables many that only have a key column
+   anywhere, which gives you a lot of tables, many only have a key column
    and a value column, and means you have to make many, many joins. Everytime
    you make a query. And if you make a small mistake, your query will not run
    in ten seconds, it will take 10 hours.
@@ -70,7 +70,8 @@ PyCon PL 2016-10-15
    but not on the things you need to index on. And there is no reporting
    tool that will make nice reports based on your brand of obscure NoSQL
    database that you choose when this project started because it was the
-   hyped database of the week.
+   hyped database of the week. Or it's so old that everyone has forgotten
+   that it exists.
 
    Or your data may be spread over many databases, maybe even
    several different types of databases!
@@ -101,7 +102,7 @@ PyCon PL 2016-10-15
 
    And the next Tuesday there is a slight change in one of the database schemas,
    and your carefully crafted queries or Python code needs changing.
-   But your boss wants THIS weeks report.
+   But your boss wants THIS weeks report. Now.
 
    And in fact, She likes your reports so much, that she demands daily copies!
    But because of the complicated database schema, or lack of indexes your
@@ -109,9 +110,11 @@ PyCon PL 2016-10-15
    down and everybody stars complaining that the Internet is slow, because they
    have no idea what is the Internet and what is not, and they go to the
    network admin and he figures out it's the database that is overloaded and
-   gets angry at you and stops bringing you coffee.
+   gets angry at you and stops fetching you coffee when he gets it for himself.
 
-   You are in a pickle now! You need a reporting database!
+   You are in a pickle now! How can you get your coffee back?
+   You need a reporting database, of course! This is what the talk is about
+   after all.
 
 ----
 
@@ -769,5 +772,5 @@ Some problems
 Questions?
 ==========
 
-http://slides.colliberty.com/PyConPL-2016
+http://slides.colliberty.com/PloneConference-2016
 
